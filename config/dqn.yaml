@@ -1,0 +1,42 @@
+environment:
+  scenario: classic
+  opponents: [rule_based_agent, rule_based_agent, rule_based_agent]
+
+state:
+  channels: [walls, crates, coins, bombs, explosions, self, opponents]
+  observation_shape: [7, 17, 17]
+  storage_dtype: uint8
+
+reward:
+  version: v1
+  coin_collected: 1.0
+  killed_opponent: 5.0
+  crate_destroyed_bonus: 0.2
+  invalid_action_penalty: -0.2
+  death_penalty: -2.0
+  survived_round_bonus: 0.2
+
+train:
+  total_steps: 200000
+  gamma: 0.99
+  learning_rate: 0.0001
+  replay_capacity: 100000
+  batch_size: 128
+  learning_starts: 10000
+  train_frequency: 2
+  target_update_frequency: 2500
+  epsilon_start: 1.0
+  epsilon_final: 0.05
+  epsilon_decay_steps: 100000
+  checkpoint_frequency: 10000
+
+eval:
+  frequency: 20000
+  periodic_episodes: 5
+  final_episodes: 50
+  seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049]
+
+output:
+  root: runs
+
+device: auto

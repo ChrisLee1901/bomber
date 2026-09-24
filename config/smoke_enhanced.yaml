@@ -1,0 +1,47 @@
+environment:
+  scenario: coin-heaven
+  opponents: [rule_based_agent, rule_based_agent, rule_based_agent]
+state:
+  include_danger: true
+algorithm:
+  double_dqn: true
+  dueling: true
+per:
+  enabled: true
+  alpha: 0.6
+  beta_start: 0.4
+  beta_steps: 100
+safety:
+  enabled: true
+augmentation:
+  enabled: true
+train:
+  total_steps: 80
+  gamma: 0.99
+  learning_rate: 0.0001
+  replay_capacity: 128
+  batch_size: 8
+  learning_starts: 16
+  train_frequency: 4
+  target_update_frequency: 20
+  epsilon_start: 1.0
+  epsilon_final: 0.05
+  epsilon_decay_steps: 60
+  checkpoint_frequency: 20
+eval:
+  frequency: 40
+  periodic_episodes: 1
+  final_episodes: 1
+  validation_seeds: [1000]
+  test_seeds: [2000]
+  opponent_sets:
+    rule: [rule_based_agent, rule_based_agent, rule_based_agent]
+curriculum:
+  stages:
+    - until_step: 30
+      opponents: [random_agent, rule_based_agent, rule_based_agent]
+    - until_step: 80
+      opponents: [hard_rule_based_agent, rule_based_agent, rule_based_agent]
+output:
+  root: .smoke_enhanced
+device: cpu

@@ -1,0 +1,6 @@
+base_config: config/dqn.yaml
+gammas: [0.99]
+seeds: [42, 43, 44]
+total_steps: 200000
+output_root: runs
+results_dir: results

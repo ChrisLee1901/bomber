@@ -1,0 +1,36 @@
+environment:
+  scenario: coin-heaven
+  opponents: [peaceful_agent, peaceful_agent, peaceful_agent]
+
+state:
+  channels: [walls, crates, coins, bombs, explosions, self, opponents]
+  observation_shape: [7, 17, 17]
+  storage_dtype: uint8
+
+reward:
+  version: v1
+
+train:
+  total_steps: 200
+  gamma: 0.99
+  learning_rate: 0.0001
+  replay_capacity: 500
+  batch_size: 8
+  learning_starts: 32
+  train_frequency: 4
+  target_update_frequency: 50
+  epsilon_start: 1.0
+  epsilon_final: 0.05
+  epsilon_decay_steps: 100
+  checkpoint_frequency: 100
+
+eval:
+  frequency: 1000
+  periodic_episodes: 1
+  final_episodes: 1
+  seeds: [1000]
+
+output:
+  root: .smoke
+
+device: auto

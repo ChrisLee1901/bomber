@@ -1,0 +1,66 @@
+environment:
+  scenario: classic
+  opponents: [rule_based_agent, rule_based_agent, rule_based_agent]
+
+state:
+  channels: [walls, crates, coins, bombs, explosions, self, opponents, danger]
+  observation_shape: [8, 17, 17]
+  storage_dtype: uint8
+  include_danger: true
+
+algorithm:
+  double_dqn: true
+  dueling: true
+
+per:
+  enabled: true
+  alpha: 0.6
+  beta_start: 0.4
+  beta_steps: 200000
+
+safety:
+  enabled: true
+
+augmentation:
+  enabled: true
+
+train:
+  total_steps: 400000
+  gamma: 0.99
+  learning_rate: 0.0001
+  replay_capacity: 100000
+  batch_size: 128
+  learning_starts: 10000
+  train_frequency: 2
+  target_update_frequency: 2500
+  epsilon_start: 1.0
+  epsilon_final: 0.05
+  epsilon_decay_steps: 200000
+  checkpoint_frequency: 10000
+
+eval:
+  frequency: 20000
+  periodic_episodes: 10
+  final_episodes: 50
+  validation_seeds: [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009]
+  test_seeds: [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009]
+  opponent_sets:
+    rule: [rule_based_agent, rule_based_agent, rule_based_agent]
+    hard: [hard_rule_based_agent, rule_based_agent, rule_based_agent]
+    mixed: [hard_rule_based_agent, aggressive_rule_based_agent, rule_based_agent]
+
+curriculum:
+  stages:
+    - until_step: 100000
+      opponents: [random_agent, rule_based_agent, rule_based_agent]
+    - until_step: 200000
+      opponents: [rule_based_agent, rule_based_agent, rule_based_agent]
+    - until_step: 300000
+      opponents: [hard_rule_based_agent, rule_based_agent, rule_based_agent]
+    - until_step: 400000
+      opponents: [hard_rule_based_agent, aggressive_rule_based_agent, rule_based_agent]
+
+output:
+  root: runs
+
+device: auto
