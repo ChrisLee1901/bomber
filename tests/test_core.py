@@ -8,6 +8,7 @@ from omegaconf import OmegaConf
 
 from agents import SequentialAgentBackend
 from bomber_rl.core import ACTIONS, BoardDQN, ReplayBuffer, action_mask, augment_batch, danger_map, dqn_target, encode_state, epsilon, load_checkpoint, safe_action_mask, save_checkpoint, transform_id_action_map, transform_observation
+from bomber_rl.agent import _preload_demos
 from bomber_rl.runner import _demo_progress, pretrain, write_demo_shard
 
 
@@ -109,6 +110,14 @@ class CoreTests(unittest.TestCase):
             write_demo_shard(Path(directory) / "demo_00000.npz", [transition(0)])
             write_demo_shard(Path(directory) / "demo_00002.npz", [transition(5)])
             self.assertEqual(_demo_progress(Path(directory)), (6, 3))
+
+    def test_preload_demo_uses_action_field(self):
+        observation = encode_state(example_state())
+        transition = {"observation": observation, "action": np.int64(1), "reward": np.float32(.5), "next_observation": observation, "terminated": np.bool_(False), "next_action_mask": np.ones(6, dtype=np.bool_), "episode_id": np.int64(0), "opponent_set": np.str_("rule")}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.npz"; write_demo_shard(path, [transition])
+            replay = ReplayBuffer(2, np.random.default_rng(1)); _preload_demos(replay, path)
+            self.assertEqual(len(replay), 1)
 
     def test_agent_backend_closes_its_log_handler(self):
         backend = SequentialAgentBackend(False, "close_test", "rule_based_agent")

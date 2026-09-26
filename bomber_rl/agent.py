@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from omegaconf import OmegaConf
 from torch.optim import Adam
+from tqdm import tqdm
 
 from .core import ACTIONS, ACTION_TO_ID, BoardDQN, ReplayBuffer, action_mask, append_csv, device_for, encode_state, epsilon, load_checkpoint, observation_shape, optimize, safe_action_mask, save_checkpoint, seed_everything, shaped_reward, sync
 
@@ -34,9 +35,11 @@ def _preload_demos(replay, directory):
     paths = [Path(directory)] if Path(directory).is_file() else sorted(Path(directory).glob("*.npz"))
     for path in paths:
         with np.load(path) as shard:
-            for index in range(len(shard["actions"])):
+            observations, actions, rewards = shard["observation"], shard["action"], shard["reward"]
+            next_observations, terminated, masks = shard["next_observation"], shard["terminated"], shard["next_action_mask"]
+            for index in tqdm(range(len(actions)), desc=f"preload {path.name}", unit="transition", leave=False):
                 if len(replay) >= replay.capacity: return
-                replay.add(shard["observation"][index], int(shard["action"][index]), float(shard["reward"][index]), shard["next_observation"][index], bool(shard["terminated"][index]), shard["next_action_mask"][index])
+                replay.add(observations[index], int(actions[index]), float(rewards[index]), next_observations[index], bool(terminated[index]), masks[index])
 
 
 def _validate_checkpoint(checkpoint, options):
