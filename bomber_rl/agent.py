@@ -72,7 +72,7 @@ def _restore(self, checkpoint):
     self.curriculum_stage = int(checkpoint.get("curriculum_stage", 0))
     if checkpoint.get("replay_state"): self.replay.load_state_dict(checkpoint["replay_state"])
     if checkpoint.get("rng_state"):
-        self.rng.bit_generator.state = checkpoint["rng_state"]; random.setstate(checkpoint["python_rng_state"]); torch.set_rng_state(checkpoint["torch_rng_state"])
+        self.rng.bit_generator.state = checkpoint["rng_state"]; random.setstate(checkpoint["python_rng_state"]); torch.set_rng_state(checkpoint["torch_rng_state"].cpu())
         if torch.cuda.is_available() and checkpoint.get("cuda_rng_state"): torch.cuda.set_rng_state_all(checkpoint["cuda_rng_state"])
 
 

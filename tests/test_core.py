@@ -4,9 +4,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from omegaconf import OmegaConf
 
+from agents import SequentialAgentBackend
 from bomber_rl.core import ACTIONS, BoardDQN, ReplayBuffer, action_mask, augment_batch, danger_map, dqn_target, encode_state, epsilon, load_checkpoint, safe_action_mask, save_checkpoint, transform_id_action_map, transform_observation
-from bomber_rl.runner import write_demo_shard
+from bomber_rl.runner import _demo_progress, pretrain, write_demo_shard
 
 
 def example_state():
@@ -99,6 +101,29 @@ class CoreTests(unittest.TestCase):
             path = Path(directory) / "demo.npz"; write_demo_shard(path, [transition])
             with np.load(path) as shard:
                 self.assertEqual(shard["observation"].dtype, np.uint8); self.assertEqual(shard["observation"].shape, (1, 7, 17, 17)); self.assertEqual(shard["episode_id"][0], 7)
+
+    def test_demo_resume_uses_next_episode_and_shard(self):
+        observation = encode_state(example_state())
+        def transition(episode_id): return {"observation": observation, "action": np.int64(1), "reward": np.float32(.5), "next_observation": observation, "terminated": np.bool_(False), "next_action_mask": np.ones(6, dtype=np.bool_), "episode_id": np.int64(episode_id), "opponent_set": np.str_("rule")}
+        with tempfile.TemporaryDirectory() as directory:
+            write_demo_shard(Path(directory) / "demo_00000.npz", [transition(0)])
+            write_demo_shard(Path(directory) / "demo_00002.npz", [transition(5)])
+            self.assertEqual(_demo_progress(Path(directory)), (6, 3))
+
+    def test_agent_backend_closes_its_log_handler(self):
+        backend = SequentialAgentBackend(False, "close_test", "rule_based_agent")
+        backend.start(); handler = backend.runner.handler; backend.close()
+        self.assertIsNone(handler.stream)
+
+    def test_pretrain_resume_restores_epoch(self):
+        config = OmegaConf.create({"state": {"include_danger": False}, "algorithm": {"dueling": False}, "device": "cpu", "train": {"learning_rate": .0001}})
+        observation = encode_state(example_state()); transition = {"observation": observation, "action": np.int64(1), "reward": np.float32(.5), "next_observation": observation, "terminated": np.bool_(False), "next_action_mask": np.ones(6, dtype=np.bool_), "episode_id": np.int64(0), "opponent_set": np.str_("rule")}
+        second = dict(transition, episode_id=np.int64(1))
+        with tempfile.TemporaryDirectory() as directory:
+            demos, output = Path(directory) / "demo.npz", Path(directory) / "pretrain.pt"; write_demo_shard(demos, [transition, second])
+            pretrain(config, demos, output, epochs=1, batch_size=2, patience=3, resume=False)
+            pretrain(config, demos, output, epochs=2, batch_size=2, patience=3, resume=True)
+            self.assertEqual(load_checkpoint(output.with_name("pretrain.latest.pt"), "cpu")["pretrain_epoch"], 2)
 
 
 if __name__ == "__main__":

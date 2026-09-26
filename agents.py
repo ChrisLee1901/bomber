@@ -231,6 +231,13 @@ class AgentRunner:
         handler.setFormatter(formatter)
         self.wlogger.addHandler(handler)
         self.fake_self.logger.addHandler(handler)
+        self.handler = handler
+
+    def close(self):
+        for logger in (self.wlogger, self.fake_self.logger):
+            if self.handler in logger.handlers:
+                logger.removeHandler(self.handler)
+        self.handler.close()
 
     def process_event(self, event_name, *event_args):
         module_name = None
@@ -270,6 +277,9 @@ class AgentBackend:
     def start(self):
         raise NotImplementedError()
 
+    def close(self):
+        pass
+
     def send_event(self, event_name, *event_args):
         raise NotImplementedError()
 
@@ -308,6 +318,11 @@ class SequentialAgentBackend(AgentBackend):
         finally:
             os.chdir(prev_cwd)
 
+    def close(self):
+        if self.runner is not None:
+            self.runner.close()
+            self.runner = None
+
 
 QUIT = "quit"
 
@@ -338,3 +353,9 @@ class ProcessAgentBackend(AgentBackend):
 
     def send_event(self, event_name, *event_args):
         self.wta_queue.put((event_name, event_args))
+
+    def close(self):
+        if self.process.is_alive():
+            self.wta_queue.put((QUIT, ()))
+            self.process.join(timeout=1)
+            if self.process.is_alive(): self.process.terminate()

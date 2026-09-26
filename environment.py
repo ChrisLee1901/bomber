@@ -327,6 +327,12 @@ class GenericWorld:
             with open(name, "w") as file:
                 json.dump(results, file, indent=4, sort_keys=True)
 
+        for agent in self.agents:
+            agent.backend.close()
+        for handler in list(self.logger.handlers):
+            self.logger.removeHandler(handler)
+            handler.close()
+
 
 class BombeRLeWorld(GenericWorld):
     def __init__(self, args: WorldArgs, agents):

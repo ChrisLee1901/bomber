@@ -41,6 +41,8 @@ uv run python main.py aggregate --config config/experiment.yaml
 
 Training is headless. Each run stores `resolved_config.yaml`, episode logs, periodic validation evaluations, `latest.pt`, `best.pt`, `final.pt`, and `final_evaluation.json` under `runs/dqn/gamma_0.99/seed_<seed>/`. `latest.pt` contains model, target, optimizer, AMP scaler, replay/PER state, RNG, current curriculum stage, best validation metric, and step. Resume requires matching observation shape and replay capacity; incompatible checkpoints fail explicitly.
 
+Long-running commands show `tqdm` progress bars: games for demo collection/evaluation, agent steps for training, and epochs plus shards for pretraining.
+
 ## Demonstrations and pretraining
 
 ```powershell
@@ -48,8 +50,13 @@ Training is headless. Each run stores `resolved_config.yaml`, episode logs, peri
 # next_observation, terminated, next_action_mask, episode_id, opponent_set.
 uv run python main.py collect-demos --config config/dqn_enhanced.yaml --episodes 500 --output-dir data/demos --agents hard_rule_based_agent rule_based_agent rule_based_agent rule_based_agent
 
+# Continue an interrupted collection without overwriting completed shards.
+uv run python main.py collect-demos --config config/dqn_enhanced.yaml --episodes 500 --output-dir data/demos --agents hard_rule_based_agent rule_based_agent rule_based_agent rule_based_agent --resume
+
 # Behavior cloning uses an episode-level split (not random transitions) and early stopping.
 uv run python main.py pretrain --config config/dqn_enhanced.yaml --demos data/demos --output runs/pretrain.pt --epochs 40 --patience 6
+
+# Pretraining resumes from runs/pretrain.latest.pt by default.
 ```
 
 `hard_rule_based_agent` targets `dqn_agent` first, avoids predicted blast paths, and only drops a bomb when its safe-action search finds an exit. The enhanced curriculum progresses through random/rule, all-rule, hard/rule, then mixed opponents.

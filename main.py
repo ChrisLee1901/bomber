@@ -149,6 +149,8 @@ def main(argv = None):
     demos_parser.add_argument("--output-dir", default="data/demos")
     demos_parser.add_argument("--agents", nargs=4, default=["rule_based_agent"] * 4)
     demos_parser.add_argument("--shard-size", type=int, default=50000)
+    demos_parser.add_argument("--resume", action="store_true", help="Continue after the last completed demo episode")
+    demos_parser.add_argument("--seed-start", type=int, default=0, help="First deterministic engine seed for a new dataset")
 
     pretrain_parser = subparsers.add_parser("pretrain", help="Behavior-clone DQN from NPZ demonstration shards")
     pretrain_parser.add_argument("--config", default="config/dqn_enhanced.yaml")
@@ -157,6 +159,8 @@ def main(argv = None):
     pretrain_parser.add_argument("--epochs", type=int, default=20)
     pretrain_parser.add_argument("--batch-size", type=int, default=128)
     pretrain_parser.add_argument("--patience", type=int, default=4)
+    pretrain_parser.add_argument("--seed", type=int, default=42)
+    pretrain_parser.add_argument("--no-resume", action="store_true")
 
     experiment_parser = subparsers.add_parser("experiment", help="Run the DQN seed and gamma matrix")
     experiment_parser.add_argument("--config", default="config/experiment.yaml")
@@ -190,10 +194,10 @@ def main(argv = None):
         print(evaluate(load_config(args.config), args.checkpoint, args.episodes, args.output, args.test, args.opponents))
         return
     if args.command_name == "collect-demos":
-        print([str(path) for path in collect_demos(load_config(args.config), args.episodes, args.output_dir, args.agents, args.shard_size)])
+        print(collect_demos(load_config(args.config), args.episodes, args.output_dir, args.agents, args.shard_size, args.resume, args.seed_start))
         return
     if args.command_name == "pretrain":
-        print(pretrain(load_config(args.config), args.demos, args.output, args.epochs, args.batch_size, args.patience))
+        print(pretrain(load_config(args.config), args.demos, args.output, args.epochs, args.batch_size, args.patience, not args.no_resume, args.seed))
         return
     if args.command_name == "experiment":
         run_experiment(args.config)

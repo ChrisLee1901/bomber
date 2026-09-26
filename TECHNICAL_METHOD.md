@@ -138,7 +138,7 @@ replay buffer, PER priorities, RNG state,
 curriculum stage, best validation metric, training step
 ```
 
-Chạy lại cùng lệnh `train` sẽ resume. Nếu observation shape hoặc replay capacity khác checkpoint, repo báo lỗi rõ ràng thay vì âm thầm train sai.
+Chạy lại cùng lệnh `train` sẽ resume. `pretrain` cũng resume từ `<output>.latest.pt`; dùng `--no-resume` để yêu cầu một run mới. `collect-demos` yêu cầu `--resume` để quét các NPZ hoàn chỉnh và tiếp tục bằng shard/episode kế tiếp. Nếu observation shape hoặc replay capacity khác checkpoint, repo báo lỗi rõ ràng thay vì âm thầm train sai.
 
 ## 10. Mục đích, cách thực hiện, kết quả kỳ vọng
 
